@@ -1,0 +1,158 @@
+
+08/23/2018
+
+This is a "dir /s" of the project right after doing a Quartus II Copy Project
+from the Project menu.
+
+This should represent all of the input/source level artifacts required to
+build the project.
+
+
+ Volume in drive C is Windows
+ Volume Serial Number is CE0D-1029
+
+ Directory of c:\Dropbox\embedded\altera\workspace\menlo_gigatron_de10_nano
+
+08/23/2018  08:48 AM    <DIR>          .
+08/23/2018  08:48 AM    <DIR>          ..
+08/23/2018  08:46 AM    <DIR>          db
+08/23/2018  08:35 AM            12,071 DE10_Nano_Default.qsf
+08/23/2018  08:46 AM               662 DE10_Nano_Default.qws
+08/23/2018  08:35 AM             3,921 DE10_Nano_Default.restore.rpt
+07/10/2018  06:23 PM             2,883 DE10_Nano_Default.SDC
+08/19/2018  09:35 AM             3,337 DE10_Nano_Default.v
+07/10/2018  06:23 PM            55,081 DE10_Nano_Default_assignment_defaults.qdf
+08/23/2018  08:35 AM               121 Menlo_Gigatron_DE10_NANO.qpf
+08/23/2018  08:48 AM                 0 MENLO_RELEASE_FILE_LIST.TXT
+08/23/2018  08:35 AM               200 qar_info.json
+08/23/2018  08:29 AM               235 README_MENLO.TXT
+08/23/2018  08:35 AM    <DIR>          v
+08/23/2018  08:35 AM    <DIR>          VGA_DATA
+              10 File(s)         78,511 bytes
+
+ Directory of c:\Dropbox\embedded\altera\workspace\menlo_gigatron_de10_nano\db
+
+08/23/2018  08:46 AM    <DIR>          .
+08/23/2018  08:46 AM    <DIR>          ..
+08/23/2018  08:35 AM             2,078 DE10_Nano_Default.cmp.rdb
+08/23/2018  08:36 AM               140 DE10_Nano_Default.db_info
+08/23/2018  08:35 AM               620 DE10_Nano_Default.restore.qmsg
+08/23/2018  08:46 AM               223 DE10_Nano_Default.sld_design_entry.sci
+08/23/2018  08:46 AM               116 DE10_Nano_Default.tmw_info
+               5 File(s)          3,177 bytes
+
+//
+// Note: That img_data.v and image_index.v are Altera IP RAM blocks which
+// have wizard and tool driven configuration files. For example they are
+// initialized from a file with the VGA image and VGA pallet during build
+// similar to, but not Verilog $readmemb/$readmemh.
+//
+// You see these are "defparam" with Altera altsyncram_component.xxx settings.
+//
+
+ Directory of c:\Dropbox\embedded\altera\workspace\menlo_gigatron_de10_nano\v
+
+08/23/2018  08:35 AM    <DIR>          .
+08/23/2018  08:35 AM    <DIR>          ..
+08/22/2018  07:41 PM             7,160 AUDIO_IF.v
+07/10/2018  06:23 PM             2,478 I2C_Controller.v
+07/10/2018  06:23 PM             4,612 I2C_HDMI_Config.v
+07/10/2018  06:23 PM             2,365 I2C_WRITE_WDATA.v
+07/10/2018  06:23 PM               356 img_data.qip
+08/19/2018  09:50 AM             6,878 img_data.v
+07/10/2018  06:23 PM                98 img_data_inst.v
+07/10/2018  06:23 PM               358 img_index.qip
+07/10/2018  06:23 PM             6,875 img_index.v
+07/10/2018  06:23 PM               100 img_index_inst.v
+07/10/2018  06:23 PM               233 Reset_Delay.v
+08/23/2018  08:35 AM    <DIR>          sys_pll
+07/10/2018  06:23 PM               238 sys_pll.cmp
+07/10/2018  06:23 PM            54,118 sys_pll.qip
+07/10/2018  06:23 PM            17,372 sys_pll.v
+08/19/2018  09:45 AM             2,658 vga_controller.v
+07/10/2018  06:23 PM             2,907 video_sync_generator.v
+              16 File(s)        108,806 bytes
+
+//
+// IP wizard generated PLL file needed by the project.
+//
+
+ Directory of c:\Dropbox\embedded\altera\workspace\menlo_gigatron_de10_nano\v\sys_pll
+
+08/23/2018  08:35 AM    <DIR>          .
+08/23/2018  08:35 AM    <DIR>          ..
+07/10/2018  06:23 PM               310 sys_pll_0002.qip
+07/10/2018  06:23 PM             2,228 sys_pll_0002.v
+               2 File(s)          2,538 bytes
+
+//
+// Project specific data files it likely blindly copies. In this case
+// VGA image and pallet info includes in the Altera RAM blocks.
+//
+
+ Directory of c:\Dropbox\embedded\altera\workspace\menlo_gigatron_de10_nano\VGA_DATA
+
+08/23/2018  08:35 AM    <DIR>          .
+08/23/2018  08:35 AM    <DIR>          ..
+07/10/2018  06:23 PM         2,270,114 img_data_logo.mif
+07/10/2018  06:23 PM             2,885 index_logo.mif
+               2 File(s)      2,272,999 bytes
+
+     Total Files Listed:
+              35 File(s)      2,466,031 bytes
+              14 Dir(s)  195,555,786,752 bytes free
+
+******************************************************************************
+
+Note: it generates a report file DE10_Nano_Default.restore.rpt which gives
+a summary of the files.
+
+This is likely a good point for a copy list to github or release project.
+
++-----------------------------------+
+; Restore Archived Project Messages ;
++-----------------------------------+
+Info: Successfully restored 'C:/Dropbox/embedded/altera/workspace/de10_nano_default/DE10_Nano_Default_tmp_archive.qar' into the 'C:/Dropbox/embedded/altera/workspace/menlo_gigatron_de10_nano' directory
+Info: Generated report 'DE10_Nano_Default.restore.rpt'
+
+
++-------------------------------------------+
+; Files Restored                            ;
++-------------------------------------------+
+; File Name                                 ;
++-------------------------------------------+
+; qar_info.json                             ;
+; DE10_Nano_Default.SDC                     ;
+; DE10_Nano_Default.qpf                     ;
+; DE10_Nano_Default.qsf                     ;
+; DE10_Nano_Default.sdc                     ;
+; DE10_Nano_Default.v                       ;
+; DE10_Nano_Default_assignment_defaults.qdf ;
+; VGA_DATA/img_data_logo.mif                ;
+; VGA_DATA/index_logo.mif                   ;
+; v/AUDIO_IF.v                              ;
+; v/I2C_Controller.v                        ;
+; v/I2C_HDMI_Config.v                       ;
+; v/I2C_WRITE_WDATA.v                       ;
+; v/Reset_Delay.v                           ;
+; v/img_data.qip                            ;
+; v/img_data.v                              ;
+; v/img_data_inst.v                         ;
+; v/img_index.qip                           ;
+; v/img_index.v                             ;
+; v/img_index_inst.v                        ;
+; v/sys_pll.cmp                             ;
+; v/sys_pll.qip                             ;
+; v/sys_pll.v                               ;
+; v/sys_pll/sys_pll_0002.qip                ;
+; v/sys_pll/sys_pll_0002.v                  ;
+; v/vga_controller.v                        ;
+; v/video_sync_generator.v                  ;
++-------------------------------------------+
+
+
++--------------------+
+; Files Not Restored ;
++--------------------+
+; File Name          ;
++--------------------+
