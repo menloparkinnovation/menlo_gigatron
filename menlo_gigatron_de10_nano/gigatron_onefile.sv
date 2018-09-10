@@ -133,16 +133,200 @@ module Gigatron_Audio_Handler
     output [3:0] output_audio_dac
     );
 
+  wire [3:0] sample;
+
   //
   // extended_output_port bits 7-4
   //
-  // This is a real time audio pass through. The audio interface logic
-  // to the specific FPGA board will sample at its audio clock sampling
-  // rate which is higher than the Gigatrons..
+  // This is a real time 4 bit audio pass through from the Gigatron.
   //
-  assign output_audio_dac = ext_io_in[7:4];
 
-endmodule //
+  assign sample = ext_io_in[7:4];
+
+  //
+  // The Gigatron audio is 4 bits, from 0 - 15. This represents analog voltage
+  // levels into a resistor network, with RC low and high pass filters.
+  //
+  // The zero crossing center point of a sine wave would be half way through
+  // the values, or 4'b0111.
+  //
+  // LPCM (Linear Pulse Code Modulation) which is the audio format used
+  // by HDMI and CD audio represents the waveform samples in two's complement.
+  //
+  // Positive numbers represent the positive portion of the sine wave
+  // and two's complement negative numbers represent the negative portion
+  // of the wave.
+  //
+  // So we translate these signals here from a 4 bit 0 based analog signal
+  // to a 4 bit two's complement one.
+  //
+  // Note: The I2S audio interface standard used by HDMI operates with
+  // MSB first so that shorter bit length samples are read with zero fill
+  // in the LSB bits. So these 4 bit Gigatron audio samples will become the
+  // high order bits [15:12] and the low order bits [11:0] will be zero's.
+  //
+
+  wire [3:0] translated;
+
+  assign output_audio_dac = translated;
+
+  always@(sample) begin
+
+      case (sample)
+
+	//
+	// Positive portion of the sine wave above the zero crossing.
+	//
+	4'b0000: translated = 4'b0000; // 0
+	4'b0001: translated = 4'b0001; // +1
+	4'b0010: translated = 4'b0010; // +2
+	4'b0011: translated = 4'b0011; // +3
+	4'b0100: translated = 4'b0100; // +4
+	4'b0101: translated = 4'b0101; // +5
+	4'b0110: translated = 4'b0110; // +6
+	4'b0111: translated = 4'b0111; // +7
+
+	//
+	// Negative portion of the sine wave below the zero crossing.
+	//
+	4'b1000: translated = 4'b1111; // -1
+	4'b1001: translated = 4'b1110; // -2
+	4'b1010: translated = 4'b1101; // -3
+	4'b1011: translated = 4'b1100; // -4
+	4'b1100: translated = 4'b1011; // -5
+	4'b1101: translated = 4'b1010; // -6
+	4'b1110: translated = 4'b1001; // -7
+	4'b1111: translated = 4'b1000; // -8
+
+	default: begin
+	end
+
+      endcase
+
+  end // always
+
+endmodule // Gigatron_Audio_Handler
+
+module Gigatron_Serial_Controller
+(
+    input fpga_clock,      // FPGA 50Mhz clock
+    input gigatron_clock,  // 6.25 Mhz Gigatron clock
+    input reset,           // Reset when == 1
+
+    // From Gigatron output port which generates the serial clock signals.
+    input [7:0] io_in,
+
+    // Registered output byte from the shift register
+    output [7:0] input_port_register,
+
+    // Signals to/from the Famicom controller
+    output famicom_pulse,
+    output famicom_latch,
+    input  famicom_data
+);
+
+  //
+  // Serial controller uses hsync_n going high as its clock pulse.
+  //
+  // It operates a shift register reading serial bits.
+  //
+  // It updates its registered output input_port_register
+  // which is read by the Gigatron CPU into its own internal
+  // register when IE_N is enabled.
+  //
+
+  reg [7:0] reg_output;
+  assign input_port_register = reg_output;
+
+  reg [7:0] reg_shift;
+
+  //
+  // Serial pulse and latch are driven by the overloaded
+  // hsync and vsync signals.
+  //
+  assign famicom_pulse = io_in[6:6]; // hsync_n
+  assign famicom_latch = io_in[7:7]; // vsync_n
+
+  wire serial_clock;
+  assign serial_clock = io_in[6:6];
+
+  //
+  // Serial input clock
+  //
+  always @ (posedge serial_clock or posedge reset) begin
+      if (reset == 1'b1) begin
+          // clear, reset
+          reg_shift <= 0;
+      end
+      else begin
+          reg_shift <= reg_shift << 1'b1;
+
+          //
+          // This second assignment only sets the lower bit leaving
+          // the upper bits to be set by the above shift assignment.
+          //
+          reg_shift[0:0] <= famicom_data;
+
+          reg_output <= reg_shift;
+      end
+  end
+
+  //
+  // External Physical Controller Wiring:
+  //
+  // The famicom_pulse, famicom_latch, famicom_data are connected to a
+  // Famicom serial game controller on schematic page 8.
+  //
+  // Pin assignments on DP9 male connector:
+  //
+  // famicom_pulse: Pin 4 - a series 68 ohm resistor connects this signal to the TTL logic.
+  // famicom_latch: Pin 3 - a series 68 ohm resistor connects this signal to the TTL logic.
+  // famicom_data:  Pin 2 - A 2.2K resistor pulls this up to VCC
+  //
+  // VCC:       Pin 6
+  // GND:       Pin 8 - shell/shield is also GND
+  //
+  // NC:        Pin 1
+  // NC:        Pin 5
+  // NC:        Pin 7
+  // NC:        Pin 9
+  //
+  //
+  // Comparison with DB9 RS232 signals:
+  //
+  // http://www.digital-loggers.com/sp.html
+  //
+  //    RS232  Famicom
+  // 1 - DCD - NC
+  // 2 - RXD - ser_data
+  // 3 - TXD - ser_latch
+  // 4 - DTR - ser_pulse
+  // 5 - GND - NC
+  // 6 - DSR - VCC
+  // 7 - RTS - NC
+  // 8 - CTS - GND
+  // 9 - RI  - NC
+  // 
+
+  //
+  // famicom_pulse signal is generated by: hsync_n from the VGA output port after
+  // passing through a 68 ohm resistor.
+  //
+  // famicom_latch signal is generated by: vsync_n from the VGA output port after
+  // passing through a 68 ohm resistor.
+  //
+  // famicom_data is input to the shift register from the serial port on pin 14.
+  //   - Note there is a 2.2k resistor on the signal line pulling it up to VCC.
+  //
+  // A 74HC595 serial shift register is clocked by SRCLK (pin 11) and RCLK (pin 12)
+  // which is sourced from hsync_n *before* the 68 ohm resistor connecting it to
+  // famicom_pulse.
+  //
+  // The shift registers 8 output port bits are driven onto the BusX signals when
+  // IE_N is asserted from the Gigatron control unit.
+  //
+
+endmodule // Gigatron_Serial_Controller
 
 //
 // This module is not part of the Gigatron, but handles the 8 bit output
@@ -572,9 +756,11 @@ module Gigatron
     input run,
 
     // I/O Port signals
-    input  [7:0] gigatron_input_port,
     output [7:0] gigatron_output_port,
     output [7:0] gigatron_extended_output_port,
+    output       famicom_pulse,
+    output       famicom_latch,
+    input        famicom_data,
 
     // Raw VGA signals from the Gigatron
     output hsync_n,
@@ -596,12 +782,7 @@ module Gigatron
     output led8, // "" bit 3
 
     // 4 bit Audio DAC
-    output [3:0] audio_dac, // extended_output_port bits 7-4
-
-    // Serial game controller
-    output ser_pulse,
-    output ser_latch,
-    input  ser_data
+    output [3:0] audio_dac // extended_output_port bits 7-4
 );
 
   //
@@ -680,9 +861,27 @@ module Gigatron
     .output_audio_dac(audio_dac)
     );
 
-  // Game Controller
-  assign ser_pulse = 1'b0;
-  assign ser_latch = 1'b0;
+  //
+  // Famicom game controller on serial interface.
+  //
+  wire [7:0] input_port_register;
+
+  Gigatron_Serial_Controller serial_controller(
+    .fpga_clock(fpga_clock),
+    .gigatron_clock(clock),     // Gigatron clock
+    .reset(reset),
+
+    // From Gigatron output port
+    .io_in(gigatron_output_port),
+
+    // Registered output byte from the shift register
+    .input_port_register(input_port_register),
+
+    // Signals to/from the Famicom controller
+    .famicom_pulse(famicom_pulse),
+    .famicom_latch(famicom_latch),
+    .famicom_data(famicom_data)
+  );
 
   //
   // The Gigatron CPU is its own module to allow customization
@@ -722,7 +921,7 @@ module Gigatron
     .ram_write(ram_write), // output
 
     // I/O signals
-    .input_port_data(gigatron_input_port), // input
+    .input_port_data(input_port_register),   // input
     .output_port_data(gigatron_output_port), // output
     .extended_output_port_data(gigatron_extended_output_port), // output
 
@@ -878,15 +1077,6 @@ module Gigatron_CPU
   reg [7:0] reg_extended_output_port;
 
   //
-  // Hold clocked input data based on OUT6 going high.
-  //
-  // Schematic page 8/8
-  //
-  // KEYWORDS: input port
-  //
-  reg [7:0] reg_game_controller_input;
-
-  //
   // Instruction format:
   //
   // 7 6 5  4 3 2  1 0
@@ -909,6 +1099,10 @@ module Gigatron_CPU
   // ALU output
   wire [7:0] alu;
   wire       alu_co;
+
+  wire [7:0] game_controller_input;
+
+  assign game_controller_input = input_port_data;
 
   //
   // Top level assignments
@@ -1004,7 +1198,7 @@ module Gigatron_CPU
   wire de_n; // enable D
   wire oe_n; // enable RAM
   wire ae_n; // enable AC
-  wire ie_n; // enable input I/O port
+  wire ie_n; // enable input I/O port for serial game controller
 
   Gigatron_Control_Unit ControlUnit(
     .clock(clock),
@@ -1101,7 +1295,8 @@ module Gigatron_CPU
   // HSYNC_N signal going high.
   //
   // KEYWORDS: input port
-  assign bus = (ie_n == 1'b0) ? reg_game_controller_input : 8'hZZ;
+  // KEYWORDS: serial input port
+  assign bus = (ie_n == 1'b0) ? game_controller_input : 8'hZZ;
 
   //
   // KEYWORDS: RAM
@@ -1184,16 +1379,16 @@ module Gigatron_CPU
   // bit 6 going high.
   //
   wire aux_io_clock;
+
   assign aux_io_clock = reg_output_port[6:6];
 
   //
   // Auxilary I/O register processing block
   //
-  // The extended output and game controller input registers
-  // are clocked by reg_output_port[6:6] going high
-  // separate from the main clock CLK1.
+  // The extended output register is clocked by reg_output_port[6:6] (HSYNC_N)
+  // going high separate from the main clock CLK1.
   //
-  // So they need their own always block.
+  // So it needs its own always block.
   //
   // This implements the logic on schematic page 8/8.
   //
@@ -1202,16 +1397,12 @@ module Gigatron_CPU
     // handle async reset
     if (reset == 1'b1) begin
       reg_extended_output_port <= 0;
-      reg_game_controller_input <= 8'h00;
     end
     else begin
       if (aux_io_clock == 1'b1) begin
 
           // Clock the current accumulator register value to the AUX I/O output
           reg_extended_output_port <= AC;
-
-          // Read the game controller input from the raw I/O input lines.
-          reg_game_controller_input <= input_port_data;
       end
     end
   end // end always extended I/O processing
@@ -3069,8 +3260,6 @@ module tb_gigatron();
   reg reset;
   reg run;
 
-  reg [7:0] gigatron_input_port;
-
   wire [7:0] gigatron_output_port;
   wire [7:0] gigatron_extended_output_port;
 
@@ -3103,9 +3292,9 @@ module tb_gigatron();
   wire [3:0] audio_dac;
 
   // Serial game controller
-  wire ser_pulse;
-  wire ser_latch;
-  reg ser_data;
+  wire famicom_pulse;
+  wire famicom_latch;
+  reg  famicom_data;
 
   // Test variables
   reg [31:0] reg_vsync_count;
@@ -3131,9 +3320,14 @@ module tb_gigatron();
     .clock(clock_6_25),
     .reset(reset),
     .run(run),
-    .gigatron_input_port(gigatron_input_port),
+
     .gigatron_output_port(gigatron_output_port),
     .gigatron_extended_output_port(gigatron_extended_output_port),
+
+     // Serial game controller
+    .famicom_pulse(famicom_pulse),
+    .famicom_latch(famicom_latch),
+    .famicom_data(famicom_data),
 
     // Raw VGA signals from the Gigatron
     .hsync_n(hsync_n),
@@ -3155,12 +3349,7 @@ module tb_gigatron();
     .led8(led8),
 
     // 4 bit Audio DAC
-    .audio_dac(audio_dac), // extended_output_port bits 7-4
-
-    // Serial game controller
-    .ser_pulse(ser_pulse),
-    .ser_latch(ser_latch),
-    .ser_data(ser_data)
+    .audio_dac(audio_dac) // extended_output_port bits 7-4
   );
 
   // Set initial values
@@ -3170,8 +3359,7 @@ module tb_gigatron();
      clock_6_25 = 0;
      reset = 1;
      run = 0;
-     gigatron_input_port = 0;
-     ser_data = 0;
+     famicom_data = 0;
 
      reg_vsync_count = 0;
      reg_test_stop_signal = 0;

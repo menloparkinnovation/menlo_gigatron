@@ -60,8 +60,11 @@ reg [23:0] bgr_data;
 wire VGA_CLK_n;
 wire [7:0] index;
 wire [23:0] bgr_data_raw;
-wire cBLANK_n, cHS, cVS, rst/*synthesis keep*/;
-////
+
+wire     hsync_n;
+wire     vsync_n;
+wire     cBLANK_n;
+wire     rst;
 
 // Positive Reset signal
 assign rst = ~iRST_n;
@@ -69,8 +72,8 @@ assign rst = ~iRST_n;
 video_sync_generator LTM_ins (.vga_clk(iVGA_CLK),
                               .reset(rst),
                               .blank_n(cBLANK_n),
-                              .HS(cHS),
-                              .VS(cVS)
+                              .HS(hsync_n),
+                              .VS(vsync_n)
 									);
 ////
 ////Address generator
@@ -92,7 +95,7 @@ always@(posedge iVGA_CLK,negedge iRST_n) begin
   if (!iRST_n) begin
      H_COUNT <= 10'd0;
   end
-  else if (cHS == 1'b0) begin
+  else if (hsync_n == 1'b0) begin
      // Horizontal sync is asserted, clear horizontal count
      H_COUNT <= 10'd0;
   end
@@ -109,7 +112,7 @@ always@(posedge iVGA_CLK, negedge iRST_n) begin
   if (!iRST_n) begin
      V_COUNT <= 9'd0;
   end
-  else if (cHS==1'b0 && cVS==1'b0) begin
+  else if (hsync_n == 1'b0 && vsync_n == 1'b0) begin
      // horizontal and vertical sync pulses are active, reset vertical counter.
      V_COUNT <= 9'd0;
   end
@@ -290,9 +293,222 @@ assign VGA_CLK_n = ~iVGA_CLK;
 	);	
 `endif
 
-//
-// VGA screen refresh logic framebuffer address generator.
-//
+  //
+  // VGA screen refresh logic framebuffer address generator.
+  //
+
+  //
+  //
+  // Note: 480 + back_porch + front_porch must equal 525. (45 for the two).
+  parameter VGA_V_FRONT_PORCH = 10'd11;
+  parameter VGA_V_BACK_PORCH  = 12'd30;    // Appears to be best.
+  // parameter VGA_V_BACK_PORCH  = 12'd28; // Little bit of chop on the top
+  //parameter VGA_V_BACK_PORCH  = 12'd30; // almost perfect. Maybe a line left to move up for the bottom.
+  //parameter VGA_V_BACK_PORCH  = 12'd34; // not chopped at top. Has 1 Gigatron line left.
+  // parameter VGA_V_BACK_PORCH  = 12'd26; // still chopped at top, RAM read to early
+  //parameter VGA_V_BACK_PORCH  = 12'd34;
+
+  // Note: 640 + back_porch + front_porch must equal 800. (160 for the two).
+  parameter VGA_H_FRONT_PORCH = 10'd16;
+
+  //
+  // This value is calculated from:
+  // 800 pixels total scan line
+  // -96 pixels for hsync_n time.
+  // -48 back porch
+  // -640 visible pixels
+  // -16 front porch
+  // ------
+  //   0
+  //
+  parameter VGA_H_BACK_PORCH  = 10'd42;
+  //parameter VGA_H_BACK_PORCH  = 10'd43; // Almost perfect.
+  //parameter VGA_H_BACK_PORCH  = 10'd48; // Now it has overscan and to much on the right
+  //parameter VGA_H_BACK_PORCH  = 10'd38; // still chopped at left, RAM read to early
+  //parameter VGA_H_BACK_PORCH  = 10'd48;
+
+  //
+  // These values are from video_sync_generator.v
+  //
+  // parameter VGA_V_FRONT_PORCH = 10'd11;
+  // parameter VGA_V_BACK_PORCH  = 12'd34;  // cut off on the top
+  // parameter VGA_H_FRONT_PORCH = 10'd16;
+  // parameter VGA_H_BACK_PORCH  = 10'd144; // cut off on left
+   
+  reg        vga_vsync_arm;
+  reg        vga_hsync_arm;
+
+  // This bumps by 640 for each horizontal line
+  parameter VGA_FRAMEBUFFER_MAX_ADDRESS = 19'h4AFFF; // (640*480) - 1, (307,200) - 1
+  reg [18:0] vga_line_address_counter;
+
+  //
+  // The maximum visible horizontal and vertical scan line counters
+  // ensure we don't overflow the framebuffer RAM.
+  //
+  parameter VGA_FRAMEBUFFER_MAX_VISIBLE_HORZ_SCAN_LINE = 10'd640;
+  reg [9:0]  vga_horizontal_visible_line_index;
+
+  parameter VGA_FRAMEBUFFER_MAX_VISIBLE_VERT_SCAN_LINE = 10'd480;
+
+  //
+  // The total number of horizontal and vertical scan lines is larger
+  // than the visible regions due to the horizontal and vertical
+  // front and back porches, which represent the non-visible regions
+  // in the standard VGA timings.
+  //
+
+  //
+  // This is from 0 - 799 for a horizontal line pixels/vga clocks
+  // due to horizontal front and back porches. The visible area
+  // is 640 pixels.
+  //
+  parameter VGA_FRAMEBUFFER_MAX_HORZ_SCAN_LINE = 10'd800;
+  reg [9:0]  vga_horizontal_line_index;
+
+  //
+  // This is from 0 - 524 for the number of vertical lines
+  // due to vertical front and back porches. The visible area
+  // is 480 lines.
+  //
+  parameter VGA_FRAMEBUFFER_MAX_VERT_SCAN_LINE = 10'd525;
+  reg [9:0] vga_vertical_line_index;
+
+  //
+  // This is run at vga_clock since that is what the monitor draws its pixels
+  // at from the real time color signal inputs.
+  //
+  always@(posedge iVGA_CLK, negedge iRST_n) begin
+
+    if (iRST_n == 1'b0) begin
+
+      ADDR <= 19'd0;
+      bgr_data <= 0;
+
+      vga_vsync_arm <= 0;
+      vga_hsync_arm <= 0;
+      vga_line_address_counter <= 0;
+      vga_vertical_line_index <= 0;
+      vga_horizontal_line_index <= 10'd0;
+      vga_horizontal_visible_line_index <= 10'd0;
+    end
+    else begin
+
+      //
+      // Not Reset
+      //
+
+      //
+      // Process vsync state machine
+      //
+      if (vsync_n == 1'b0) begin
+
+	  // vsync is asserted
+	  vga_vsync_arm <= 1'b1;
+      end
+      else begin
+
+	  //
+	  // vsync_n is not asserted
+	  //
+	  if (vga_vsync_arm == 1'b1) begin
+
+	      // A vsync has occured, reset the framebuffer address
+	      ADDR <= 19'd0;
+	      vga_line_address_counter <= 19'd0;
+	      vga_vertical_line_index <= 10'd0;
+	      vga_horizontal_line_index <= 10'd0;
+	      vga_horizontal_visible_line_index <= 10'd0;
+
+	      vga_vsync_arm <= 1'b0;
+	  end
+
+      end // vsync_n state machine
+
+      //
+      // Process hsync state machine
+      //
+      if (hsync_n == 1'b0) begin
+
+	  vga_hsync_arm <= 1'b1;
+
+      end
+      else begin
+
+	  //
+	  // hsync_n is not asserted
+	  //
+
+	  if (vga_hsync_arm == 1'b1) begin
+
+	      vga_hsync_arm <= 1'b0;
+
+	      //
+	      // An hsync has occurred.
+	      //
+
+	      if (vga_vertical_line_index != VGA_FRAMEBUFFER_MAX_VERT_SCAN_LINE) begin
+
+		// Increment vertical line index
+		vga_vertical_line_index <= vga_vertical_line_index + 10'd1;
+	      end
+
+	      //
+	      // Don't add horizontal lines to framebuffer until beyond
+	      // the vertical back porch.
+	      //
+	      if (vga_vertical_line_index >= VGA_V_BACK_PORCH) begin
+
+		// Set the framebuffer address to the next line address.
+		vga_line_address_counter <= vga_line_address_counter + 19'd640;
+		vga_horizontal_line_index <= 10'd0;
+		vga_horizontal_visible_line_index <= 10'd0;
+
+		ADDR <= vga_line_address_counter;
+	      end
+	  end
+	  else begin
+
+	      //
+	      // Main pixel scan logic.
+              // The framebuffer contents are output onto the VGA/HDMI
+	      // signals to the monitor.
+              //
+
+	      //
+	      // Don't add horizontal lines to framebuffer address unless in the
+	      // visible region.
+	      //
+	      if (vga_vertical_line_index >= VGA_V_BACK_PORCH) begin
+
+		vga_horizontal_line_index <= vga_horizontal_line_index + 10'd1;
+
+		if (vga_horizontal_line_index >= VGA_H_BACK_PORCH) begin
+
+		  // Ensure we don't overrun the current horizontal scan lines allocated memory
+		  if (vga_horizontal_visible_line_index != VGA_FRAMEBUFFER_MAX_VISIBLE_HORZ_SCAN_LINE) begin
+
+		    vga_horizontal_visible_line_index <= vga_horizontal_visible_line_index + 10'd1;
+
+                    bgr_data <= bgr_data_raw;
+
+		    ADDR <= ADDR + 19'd1;
+		  end
+
+		end // in visible horizontal region
+
+	      end // in visible vertical region
+
+	  end // not vga_hsync armed
+
+      end // hsync_n state machine
+
+    end // not reset
+
+  end // end always posedge vga_clock
+
+`ifdef not_working_code
+
 always@(posedge iVGA_CLK, negedge iRST_n) begin
 
   if (!iRST_n) begin
@@ -324,6 +540,7 @@ always@(posedge iVGA_CLK, negedge iRST_n) begin
   end // not reset
 
 end // always
+`endif
 
 //
 // Menlo: Mapping of RGB 8 bit values from 24 bit palette generators output.
@@ -334,8 +551,8 @@ assign r_data = bgr_data[7:0];
 
 //////Delay the iHD, iVD, iDEN for one clock cycle;
 always@(negedge iVGA_CLK) begin
-  oHS <= cHS;
-  oVS <= cVS;
+  oHS <= hsync_n;
+  oVS <= vsync_n;
   oBLANK_n <= cBLANK_n;
 end
 

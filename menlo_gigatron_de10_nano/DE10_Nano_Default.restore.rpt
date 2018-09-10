@@ -1,5 +1,5 @@
 Restore Archived Project report for DE10_Nano_Default
-Wed Sep 05 18:19:46 2018
+Sun Sep 09 18:18:46 2018
 Quartus Prime Version 17.1.0 Build 590 10/25/2017 SJ Lite Edition
 
 
@@ -36,7 +36,7 @@ refer to the applicable agreement for further details.
 +-------------------------------------------------------------------------+
 ; Restore Archived Project Summary                                        ;
 +---------------------------------+---------------------------------------+
-; Restore Archived Project Status ; Successful - Wed Sep 05 18:19:46 2018 ;
+; Restore Archived Project Status ; Successful - Sun Sep 09 18:18:46 2018 ;
 ; Revision Name                   ; DE10_Nano_Default                     ;
 ; Top-level Entity Name           ; DE10_Nano_Default                     ;
 ; Family                          ; Cyclone V                             ;
@@ -61,6 +61,7 @@ Info: Generated report 'DE10_Nano_Default.restore.rpt'
 ; DE10_Nano_Default.v                       ;
 ; DE10_Nano_Default_assignment_defaults.qdf ;
 ; Menlo_Gigatron_DE10_NANO.qpf              ;
+; VGA_DATA/img_data_logo.mif                ;
 ; dualportframebuffer.bsf                   ;
 ; dualportframebuffer.qip                   ;
 ; dualportframebuffer.v                     ;
@@ -74,6 +75,8 @@ Info: Generated report 'DE10_Nano_Default.restore.rpt'
 ; gigatron_ram_bb.v                         ;
 ; gigatron_ram_inst.v                       ;
 ; romv2_verilog_data.txt                    ;
+; user_push_button.sv                       ;
+; user_switch.sv                            ;
 ; v/I2C_Controller.v                        ;
 ; v/I2C_HDMI_Config.v                       ;
 ; v/I2C_WRITE_WDATA.v                       ;
@@ -92,7 +95,6 @@ Info: Generated report 'DE10_Nano_Default.restore.rpt'
 ; v/sys_pll/sys_pll_0002.v                  ;
 ; v/vga_controller.v                        ;
 ; v/video_sync_generator.v                  ;
-; vga_data/img_data_logo.mif                ;
 ; vga_fifo.qip                              ;
 ; vga_fifo.v                                ;
 ; vga_fifo_bb.v                             ;

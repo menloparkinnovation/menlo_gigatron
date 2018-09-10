@@ -207,6 +207,8 @@ set_global_assignment -name EDA_TEST_BENCH_NAME tb_gigatron -section_id eda_simu
 set_global_assignment -name EDA_DESIGN_INSTANCE_NAME NA -section_id tb_gigatron
 set_global_assignment -name EDA_TEST_BENCH_MODULE_NAME tb_gigatron -section_id tb_gigatron
 set_global_assignment -name EDA_TEST_BENCH_FILE gigatron_onefile.sv -section_id tb_gigatron
+set_global_assignment -name SYSTEMVERILOG_FILE user_switch.sv
+set_global_assignment -name SYSTEMVERILOG_FILE user_push_button.sv
 set_global_assignment -name SYSTEMVERILOG_FILE v/menlo_hdmi_audio.sv
 set_global_assignment -name SYSTEMVERILOG_FILE gigatron_onefile.sv
 set_global_assignment -name VERILOG_FILE v/I2C_WRITE_WDATA.v
