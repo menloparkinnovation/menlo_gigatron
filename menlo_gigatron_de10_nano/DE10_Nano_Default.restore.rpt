@@ -1,5 +1,5 @@
 Restore Archived Project report for DE10_Nano_Default
-Sun Sep 09 18:18:46 2018
+Sun Oct 28 17:53:58 2018
 Quartus Prime Version 17.1.0 Build 590 10/25/2017 SJ Lite Edition
 
 
@@ -36,7 +36,7 @@ refer to the applicable agreement for further details.
 +-------------------------------------------------------------------------+
 ; Restore Archived Project Summary                                        ;
 +---------------------------------+---------------------------------------+
-; Restore Archived Project Status ; Successful - Sun Sep 09 18:18:46 2018 ;
+; Restore Archived Project Status ; Successful - Sun Oct 28 17:53:58 2018 ;
 ; Revision Name                   ; DE10_Nano_Default                     ;
 ; Top-level Entity Name           ; DE10_Nano_Default                     ;
 ; Family                          ; Cyclone V                             ;
@@ -50,57 +50,67 @@ Info: Successfully restored 'C:/Dropbox/embedded/altera/workspace/menlo_gigatron
 Info: Generated report 'DE10_Nano_Default.restore.rpt'
 
 
-+-------------------------------------------+
-; Files Restored                            ;
-+-------------------------------------------+
-; File Name                                 ;
-+-------------------------------------------+
-; qar_info.json                             ;
-; DE10_Nano_Default.SDC                     ;
-; DE10_Nano_Default.qsf                     ;
-; DE10_Nano_Default.v                       ;
-; DE10_Nano_Default_assignment_defaults.qdf ;
-; Menlo_Gigatron_DE10_NANO.qpf              ;
-; VGA_DATA/img_data_logo.mif                ;
-; dualportframebuffer.bsf                   ;
-; dualportframebuffer.qip                   ;
-; dualportframebuffer.v                     ;
-; dualportframebuffer_bb.v                  ;
-; dualportframebuffer_inst.v                ;
-; gigatron_eeprom_from_file.sv              ;
-; gigatron_onefile.sv                       ;
-; gigatron_ram.bsf                          ;
-; gigatron_ram.qip                          ;
-; gigatron_ram.v                            ;
-; gigatron_ram_bb.v                         ;
-; gigatron_ram_inst.v                       ;
-; romv2_verilog_data.txt                    ;
-; user_push_button.sv                       ;
-; user_switch.sv                            ;
-; v/I2C_Controller.v                        ;
-; v/I2C_HDMI_Config.v                       ;
-; v/I2C_WRITE_WDATA.v                       ;
-; v/Reset_Delay.v                           ;
-; v/img_data.qip                            ;
-; v/img_data.v                              ;
-; v/img_data_inst.v                         ;
-; v/img_index.qip                           ;
-; v/img_index.v                             ;
-; v/img_index_inst.v                        ;
-; v/menlo_hdmi_audio.sv                     ;
-; v/sys_pll.cmp                             ;
-; v/sys_pll.qip                             ;
-; v/sys_pll.v                               ;
-; v/sys_pll/sys_pll_0002.qip                ;
-; v/sys_pll/sys_pll_0002.v                  ;
-; v/vga_controller.v                        ;
-; v/video_sync_generator.v                  ;
-; vga_fifo.qip                              ;
-; vga_fifo.v                                ;
-; vga_fifo_bb.v                             ;
-; vga_fifo_inst.v                           ;
-; x74xx153.sv                               ;
-+-------------------------------------------+
++--------------------------------------------------------+
+; Files Restored                                         ;
++--------------------------------------------------------+
+; File Name                                              ;
++--------------------------------------------------------+
+; qar_info.json                                          ;
+; DE10_Nano_Default.SDC                                  ;
+; DE10_Nano_Default.qsf                                  ;
+; DE10_Nano_Default.v                                    ;
+; DE10_Nano_Default_assignment_defaults.qdf              ;
+; Menlo_Gigatron_DE10_NANO.qpf                           ;
+; application_gigatron/gigatron_eeprom_from_file.sv      ;
+; application_gigatron/gigatron_onefile.sv               ;
+; application_gigatron/gigatron_option_rom.sv            ;
+; application_gigatron/gigatron_shell.sv                 ;
+; application_gigatron/gt1_tetris_verilog_data.txt       ;
+; application_gigatron/menlo_babelfish.sv                ;
+; application_gigatron/romv2_verilog_data.txt            ;
+; application_gigatron/x74xx153.sv                       ;
+; db/stp1_auto_stripped.stp                              ;
+; dualportframebuffer.bsf                                ;
+; dualportframebuffer.qip                                ;
+; dualportframebuffer.v                                  ;
+; dualportframebuffer_bb.v                               ;
+; dualportframebuffer_inst.v                             ;
+; dualportspritebuffer.bsf                               ;
+; dualportspritebuffer.qip                               ;
+; dualportspritebuffer.v                                 ;
+; dualportspritebuffer_bb.v                              ;
+; dualportspritebuffer_inst.v                            ;
+; gigatron_ram.bsf                                       ;
+; gigatron_ram.qip                                       ;
+; gigatron_ram.v                                         ;
+; gigatron_ram_bb.v                                      ;
+; gigatron_ram_inst.v                                    ;
+; silicon_application/gigatron_application_shell.sv      ;
+; silicon_hal/de10_nano_shell_top.sv                     ;
+; silicon_shell/I2C_Controller.sv                        ;
+; silicon_shell/I2C_HDMI_Config.sv                       ;
+; silicon_shell/I2C_WRITE_WDATA.sv                       ;
+; silicon_shell/Reset_Delay.sv                           ;
+; silicon_shell/application_ui.sv                        ;
+; silicon_shell/led_flasher.sv                           ;
+; silicon_shell/menlo_hdmi_audio.sv                      ;
+; silicon_shell/sprite_buffer.sv                         ;
+; silicon_shell/sys_pll.cmp                              ;
+; silicon_shell/sys_pll.qip                              ;
+; silicon_shell/sys_pll.v                                ;
+; silicon_shell/sys_pll/sys_pll_0002.qip                 ;
+; silicon_shell/sys_pll/sys_pll_0002.v                   ;
+; silicon_shell/tinyfont_verilog_data.txt                ;
+; silicon_shell/user_push_button.sv                      ;
+; silicon_shell/user_switch.sv                           ;
+; silicon_shell/vga_8bit_true_color_palette_generator.sv ;
+; silicon_shell/vga_controller.sv                        ;
+; silicon_shell/vga_controller_with_sprite.sv            ;
+; silicon_shell/vga_framebuffer_data.mif                 ;
+; silicon_shell/vga_test_pattern_generator.sv            ;
+; silicon_shell/video_sync_generator.sv                  ;
+; stp1.stp                                               ;
++--------------------------------------------------------+
 
 
 +--------------------+
